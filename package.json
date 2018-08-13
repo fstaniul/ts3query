@@ -1,0 +1,28 @@
+{
+  "name": "teamspeak3-query",
+  "version": "0.1.0",
+  "description": "A Teamspeak3 Query interface for node.js.",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vip1all/teamspeak3-query-js.git"
+  },
+  "keywords": [
+    "teamspeak3"
+  ],
+  "author": "Filip Staniul",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/vip1all/teamspeak3-query-js/issues"
+  },
+  "homepage": "https://github.com/vip1all/teamspeak3-query-js#readme",
+  "devDependencies": {
+    "chai": "^4.1.2",
+    "chai-arrays": "^2.0.0",
+    "eslint": "^5.3.0",
+    "mocha": "^5.2.0"
+  }
+}
