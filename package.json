@@ -1,10 +1,10 @@
 {
-  "name": "teamspeak3-query",
+  "name": "ts3query",
   "version": "0.1.0",
-  "description": "A Teamspeak3 Query interface for node.js.",
-  "main": "index.js",
+  "description": "A Teamspeak3 Query interface in Node.",
+  "main": "src/index.js",
   "scripts": {
-    "test": "mocha test.js"
+    "test": "mocha test/**/*.js"
   },
   "repository": {
     "type": "git",
