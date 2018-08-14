@@ -7,22 +7,22 @@ A Teamspeak3 Query interface in Node.js.
 ### Installation
 
 ```
-$ npm install ts3query
+$ npm i teamspeak3query
 ```
 
 ### How to use
 
 ```
-cosnt TS3Query = require('ts3query').TS3Query;
+cosnt TS3Query = require('teamspeak3query').TS3Query;
 const ts = new TS3Query();
 ```
 
 Package exports a factory function so you can write it less verbously:
 
 ```
-const ts = require('ts3query')();
+const ts = require('teamspeak3query')();
 // or
-const ts3query = require('ts3query');
+const ts3query = require('teamspeak3query');
 const ts = ts3query();
 ```
 
@@ -68,6 +68,10 @@ Then you will need to register event with teamspeak 3 server by calling `servern
 NOTE: Note that teamspeak 3 query can listen for events only on one channel, it is limitation on teamspeak 3 server.
 
 Callback will be called with object containg 2 keys `event` and `data` where event describes event send by teamspeak 3 server (`notifytextmessage`, `notifycliententerview`, `notifyclientleftview`) and data is object with all of the data send by teamspeak 3 query.
+
+### Node version
+
+Tested with node version: v10.7.0. I cannot asure it will work with other versions of node.
 
 ### License
 
