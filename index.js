@@ -1,4 +1,5 @@
 const net = require('net');
+const events = require('events');
 
 class Deferred {
   constructor() {
@@ -13,6 +14,7 @@ class TS3Query {
   constructor() {
     this.queue = [];
     this.data = '';
+    this.eventEmitter = new events.EventEmitter();
   }
 
   connect(port, host, options) {
@@ -42,10 +44,21 @@ class TS3Query {
       el.reject(new Error('Connection closed before receiving data!'))
     );
     this.queue = [];
+    this.data = '';
+  }
+
+  waitAndClose() {
+    const promises = this.queue.map(e => e.promise);
+    return Promise.all(promises).then(() => this.close());
   }
 
   attachListener() {
     this.socket.on('data', data => {
+      data = data.toString('utf8');
+
+      // if this is event message send by teamspeak 3 query then handle event and leave rest.
+      if (/notify/.test(data)) return this.handleEvent(data);
+
       this.data += data;
 
       if (!/error id=\d+ msg=.*?\n\r$/.test(data)) return;
@@ -58,6 +71,21 @@ class TS3Query {
         def.resolve(result);
       else def.reject(result);
     });
+  }
+
+  handleEvent(stringData) {
+    const splitStringData = stringData.split(' ');
+    const event = splitStringData[0];
+    const data = parseInputData(splitStringData.slice(1).join(' '));
+
+    if (event === 'notifycliententerview' || event === 'notifyclientleftview')
+      this.eventEmitter.emit('server', { event, data });
+
+    if (event === 'notifytextmessage')
+      this.eventEmitter.emit('text', { event, data });
+
+    if (event === 'notifyclientmoved')
+      this.eventEmitter.emit('channel', { event, data });
   }
 
   isTS3Server(def, data) {
@@ -97,6 +125,22 @@ class TS3Query {
     });
 
     return def.promise;
+  }
+
+  on(event, cb) {
+    this.eventEmitter.on(event, cb);
+  }
+
+  once(event, cb) {
+    this.eventEmitter.once(event, cb);
+  }
+
+  removeListener(event, cb) {
+    this.eventEmitter.removeListener(event, cb);
+  }
+
+  removeAllListeners() {
+    this.eventEmitter.removeAllListeners();
   }
 }
 
