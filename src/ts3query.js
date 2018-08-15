@@ -13,30 +13,42 @@ class TS3Query {
   }
 
   connect(port, host, options) {
-    if (this.connected) return;
+    if (this.connected) {
+      debug('Called connect when still connected to teamspeak 3 server.');
+      return;
+    }
     host = host || 'localhost';
+
+    debug(`Connecting to ${host}:${port} ...`);
 
     this.socket = new net.Socket(options);
     const def = new Deferred();
 
     this.socket.on('error', err => {
-      debug('Received socker error:', err);
+      debug('Received socket error:', err);
       this.close(err);
       if (def.promise.status === 'PENDING') def.reject(err);
+      this.eventEmitter.emit('close', err);
     });
 
     this.socket.connect(
       port,
       host,
-      () => (this.connected = true)
+      () => {
+        this.connected = true;
+      }
     );
+
     this.socket.once('data', data => this.isTS3Server(def, data));
+
     def.promise.then(() => this.attachListener(), () => this.close());
 
     return def.promise;
   }
 
   close(err) {
+    debug(`Close called with ${err}`);
+
     if (this.socket) {
       if (err) this.socket.destroy(err);
       else this.socket.end();
@@ -49,6 +61,8 @@ class TS3Query {
     this.data = '';
 
     this.connected = false;
+
+    debug('Disconnected from teamspeak 3 server.');
   }
 
   waitAndClose() {
@@ -57,7 +71,7 @@ class TS3Query {
   }
 
   attachListener() {
-    debug('connected and ataching listeners');
+    debug('Connected and ataching listeners.');
 
     this.socket.on('data', data => {
       data = data.toString('utf8');
@@ -77,9 +91,12 @@ class TS3Query {
         def.resolve(result);
       else def.reject(result);
     });
+
+    this.eventEmitter.emit('connect');
   }
 
   handleEvent(stringData) {
+    debug(`Received teamspeak3 event: ${stringData}`);
     const splitStringData = stringData.split(' ');
     const event = splitStringData[0];
     const data = parseInputData(splitStringData.slice(1).join(' '));
@@ -100,8 +117,13 @@ class TS3Query {
       data.toString('utf8')
     );
     if (data instanceof Buffer) data = data.toString('utf8');
-    if (/TS3/.test(data)) def.resolve();
-    else def.reject();
+    if (/TS3/.test(data)) {
+      debug('Server did respond as teamspeak3 server, continuing.');
+      def.resolve();
+    } else {
+      debug('Server did NOT respond as teamspeak3 server, aborting.');
+      def.reject();
+    }
   }
 
   /**
@@ -130,8 +152,10 @@ class TS3Query {
 
     const def = new Deferred();
 
+    debug(`Sending ${command} ...`);
     this.socket.write(command + '\n\r', 'utf8', () => {
       this.queue.push(def);
+      debug(`Command [${command}] has been sent.`);
     });
 
     return def.promise;
