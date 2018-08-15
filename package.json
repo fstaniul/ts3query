@@ -1,6 +1,6 @@
 {
   "name": "teamspeak3query",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A Teamspeak3 Query interface in Node.",
   "main": "src/index.js",
   "scripts": {
