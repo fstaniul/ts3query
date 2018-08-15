@@ -49,9 +49,14 @@ class TS3Query {
   close(err) {
     debug(`Close called with ${err}`);
 
+    const def = new Deferred();
+
     if (this.socket) {
+      this.socket.once('close', () => def.resolve());
       if (err) this.socket.destroy(err);
       else this.socket.end();
+    } else {
+      def.resolve();
     }
 
     this.queue.forEach(el =>
@@ -63,6 +68,8 @@ class TS3Query {
     this.connected = false;
 
     debug('Disconnected from teamspeak 3 server.');
+
+    return def;
   }
 
   waitAndClose() {
