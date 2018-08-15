@@ -2,24 +2,33 @@ const net = require('net');
 const events = require('events');
 const Deferred = require('./deferred');
 const { encodeTS3String, parseInput, parseInputData } = require('./util');
+const debug = require('debug')('teamspeak3query');
 
 class TS3Query {
   constructor() {
     this.queue = [];
     this.data = '';
     this.eventEmitter = new events.EventEmitter();
+    this.connected = false;
   }
 
   connect(port, host, options) {
+    if (this.connected) return;
     host = host || 'localhost';
 
-    this.close();
     this.socket = new net.Socket(options);
-
     const def = new Deferred();
+
+    this.socket.on('error', err => {
+      debug('Received socker error:', err);
+      this.close(err);
+      if (def.promise.status === 'PENDING') def.reject(err);
+    });
+
     this.socket.connect(
       port,
-      host
+      host,
+      () => (this.connected = true)
     );
     this.socket.once('data', data => this.isTS3Server(def, data));
     def.promise.then(() => this.attachListener(), () => this.close());
@@ -38,6 +47,8 @@ class TS3Query {
     );
     this.queue = [];
     this.data = '';
+
+    this.connected = false;
   }
 
   waitAndClose() {
@@ -46,6 +57,8 @@ class TS3Query {
   }
 
   attachListener() {
+    debug('connected and ataching listeners');
+
     this.socket.on('data', data => {
       data = data.toString('utf8');
 
@@ -82,8 +95,12 @@ class TS3Query {
   }
 
   isTS3Server(def, data) {
+    debug(
+      'Checking if teamspeak 3 server. Message from teamspeak 3 server:',
+      data.toString('utf8')
+    );
     if (data instanceof Buffer) data = data.toString('utf8');
-    if (/^TS3/.test(data)) def.resolve();
+    if (/TS3/.test(data)) def.resolve();
     else def.reject();
   }
 
